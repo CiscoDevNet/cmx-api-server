@@ -1,0 +1,173 @@
+#!/usr/bin/env node
+
+/**
+ * Module dependencies.
+ */
+
+var cluster = require('cluster');
+var https = require('https');
+var http = require('http');
+var fs = require('fs');
+var os = require('os');
+var Table = require('cli-table');
+var main = require('../main');
+var logger = require(__base + 'config/logger');
+var configOptions = require(__base +'config/options');
+var debug = require('debug')('cmx-tools:server');
+var privateKey = fs.readFileSync(__base + 'config/certs/server-key.pem').toString();
+var certificate = fs.readFileSync(__base + 'config/certs/server-cert.pem').toString();
+
+var options = {
+  key : privateKey,
+  cert : certificate
+}
+
+/**
+ * Create HTTP server.
+ */
+var workers = [];
+if (cluster.isMaster) {
+    logger.info(`Master PID ${process.pid} is running`);
+
+    // Fork workers.
+    var workerId = 1;
+    var workerInfoStats = true;
+    for (let i = 0; i < configOptions.NUMBER_NOTIFY_WORKERS; i++) {
+        var worker = cluster.fork({WORKER_ID: workerId, WORKER_PORT: configOptions.NOTIFY_WEB_PORT, WORKER_INFO_STATS: workerInfoStats});
+        worker.workerPort = configOptions.NOTIFY_WEB_PORT;
+        worker.workerInfoStats = workerInfoStats;
+        workers.push(worker);
+        workerInfoStats = false;
+        ++workerId;
+    }
+    for (let i = 0; i < configOptions.NUMBER_REST_WORKERS; i++) {
+        var worker = cluster.fork({WORKER_ID: workerId, WORKER_PORT: configOptions.REST_WEB_PORT, WORKER_INFO_STATS: workerInfoStats});
+        worker.workerPort = configOptions.NOTIFY_WEB_PORT;
+        worker.workerInfoStats = workerInfoStats;
+        workers.push(worker);
+        ++workerId;
+    }
+
+    cluster.on('exit', (worker, code, signal) => {
+        logger.info(`Worker PID ${worker.process.pid} died. Worker ID ${worker.id}`);
+        for(var i=0; i < workers.length; i++){
+            var aworker = workers[i];
+            if (worker.pid === aworker.pid) {
+                workers.splice(i);
+            }
+        }
+        var oldWorkerId = worker.id;
+        var oldWorkerPort = worker.workerPort;
+        var oldWorkerInfoStats = worker.workerInfoStats;
+        logger.info(`Restarting Worker ${oldWorkerId} died. Using port ${oldWorkerPort}`);
+        var newWorker = cluster.fork({WORKER_ID: workerId, WORKER_PORT: oldWorkerPort, WORKER_INFO_STATS: oldWorkerInfoStats});
+        newWorker.workerPort = oldWorkerPort;
+        newWorker.workerInfoStats = oldWorkerInfoStats;
+        workers.push(newWorker);
+        ++workerId;
+    });
+    setInterval(refreshSummaryInfo, configOptions.LOG_SUMMARY_INFO_STATS_INTERVAL * 1000);
+} else {
+    // Workers can share any TCP connection
+    // In this case it is an HTTP server
+    var server = {};
+    if (configOptions.DO_HTTPS) {
+      server = https.createServer(options, main);
+    } else {
+       server = http.createServer(main);
+    }
+
+    /**
+     * Listen on provided port, on all network interfaces.
+     */
+
+    server.listen(process.env.WORKER_PORT);
+    server.on('error', onError);
+    server.on('listening', onListening);
+
+    logger.info(`Worker PID ${process.pid} started. Worker ID ${process.env.WORKER_ID}`);
+}
+
+// -----------------------------------------------------------------------
+// Function: refreshSummaryInfo
+//
+// Description: Refresh the summary notification information
+//
+// Parameters: None
+//
+// Returns: None
+// -----------------------------------------------------------------------
+function refreshSummaryInfo() {
+
+    var processInfoTable = new Table();
+    var memoryUsage = process.memoryUsage();
+    processInfoTable.push(
+            {'Total Memroy': (os.totalmem() / 1048576).toFixed(2) + " MB"},
+            {'Free Memroy': (os.freemem() / 1048576).toFixed(2) + " MB"},
+            {'Master Node.js RSS Memroy': (memoryUsage.rss / 1048576).toFixed(2) + " MB"},
+            {'Master Node.js Heap Total Memory': (memoryUsage.heapTotal/ 1048576).toFixed(2) + " MB"},
+            {'Master Node.js Heap Used Memory': (memoryUsage.heapUsed / 1048576).toFixed(2) + " MB"},
+            {'Master Node.js External Memory': (memoryUsage.external / 1048576).toFixed(2) + " MB"}
+    );
+    logger.info("Memory Stats\n" + processInfoTable.toString());
+}
+
+/**
+ * Normalize a port into a number, string, or false.
+ */
+
+function normalizePort(val) {
+  var port = parseInt(val, 10);
+
+  if (isNaN(port)) {
+    // named pipe
+    return val;
+  }
+
+  if (port >= 0) {
+    // port number
+    return port;
+  }
+
+  return false;
+}
+
+/**
+ * Event listener for HTTP server "error" event.
+ */
+
+function onError(error) {
+  if (error.syscall !== 'listen') {
+    throw error;
+  }
+
+  var bind = typeof port === 'string'
+    ? 'Pipe ' + port
+    : 'Port ' + port;
+
+  // handle specific listen errors with friendly messages
+  switch (error.code) {
+    case 'EACCES':
+      console.error(bind + ' requires elevated privileges');
+      process.exit(1);
+      break;
+    case 'EADDRINUSE':
+      console.error(bind + ' is already in use');
+      process.exit(1);
+      break;
+    default:
+      throw error;
+  }
+}
+
+/**
+ * Event listener for HTTP server "listening" event.
+ */
+
+function onListening() {
+  var addr = server.address();
+  var bind = typeof addr === 'string'
+    ? 'pipe ' + addr
+    : 'port ' + addr.port;
+  debug('Listening on ' + bind);
+}
