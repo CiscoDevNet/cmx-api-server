@@ -5,8 +5,8 @@ module.exports.DO_HTTPS = true;                        // Should the web server 
 module.exports.NUMBER_NOTIFY_WORKERS = 5;              // Number of workers for the notification processing
 module.exports.NUMBER_REST_WORKERS = 2;                // Number of workers for the REST API handling
 
-module.exports.CURRENT_DEVICE_TTL = 1200;              // Number of seconds before removing device from current cache if not updated
-module.exports.CURRENT_DEVICE_CHECK_PERIOD = 120;      // Number of seconds before checking for current devices to be removed
+module.exports.CURRENT_DEVICE_TTL = 172800;            // Number of seconds before removing device from current cache if not updated
+module.exports.CURRENT_DEVICE_CHECK_PERIOD = 600;      // Number of seconds before checking for current devices to be removed
 
 module.exports.NOTIFY_TTL = 1200;                      // Number of seconds before removing notify sources if not updated
 module.exports.NOTIFY_CHECK_PERIOD = 120;              // Number of seconds before checking for notify sources to be removed

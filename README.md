@@ -29,14 +29,25 @@ configuration settings which can be modified in the configuration file.
 ## CMX Configuration ##
 
 In CMX a new notification needs to be created to send location updates to the running
-CMX API Server. Create a notification with the following settings.
+CMX API Server. A second notification needs to be created to send absence events for
+clients no longer being tracked in CMX. Create the location update notification with the following settings.
 
   * **Name** Enter a describing the notifications
   * **Type** Select _Location Update_
-  * **Device Type** Select the device type. Preferred option is _All_ or _Client_
+  * **Device Type** Select the device type. Preferred option is _Client_
   * **Hierarchy** Select the hierarchy. Preferred option is _All Locations_
   * **Mac Address** Enter a MAC Address to filter upon. Preferred option is to leave the field blank
   * **Receiver** Use _https_ option with the server IP and default port is _9094_. The URI is _api/v1/notify/location_
+  * **MAC Hashing** MAC hashing should be _OFF_
+  * **Message Format** Select _JSON_
+
+Create the absence event notification with the following settings
+
+  * **Name** Enter a describing the notifications
+  * **Type** Select Absence_
+  * **Device Type** Select the device type. Preferred option is _Client_
+  * **Mac Address** Enter a MAC Address to filter upon. Preferred option is to leave the field blank
+  * **Receiver** Use _https_ option with the server IP and default port is _9094_. The URI is _api/v1/notify/absence
   * **MAC Hashing** MAC hashing should be _OFF_
   * **Message Format** Select _JSON_
 
@@ -50,8 +61,8 @@ file. The settings in the file are the following.
   * **DO_HTTPS** [true] Should the web server start using HTTPS
   * **NUMBER_NOTIFY_WORKERS** [5] Number of workers for the notification processing
   * **NUMBER_REST_WORKERS** [2] Number of workers for the REST API handling
-  * **CURRENT_DEVICE_TTL** [1200] Number of seconds before removing device from current cache if not updated
-  * **CURRENT_DEVICE_CHECK_PERIOD** [120] Number of seconds before checking for current devices to be removed
+  * **CURRENT_DEVICE_TTL** [172800] Number of seconds before removing device from current cache if not updated
+  * **CURRENT_DEVICE_CHECK_PERIOD** [600] Number of seconds before checking for current devices to be removed
   * **NOTIFY_TTL** [1200] Number of seconds before removing notify sources if not updated
   * **NOTIFY_CHECK_PERIOD** [120] Number of seconds before checking for notify sources to be removed
   * **REST_TTL** [1200] Number of seconds before removing REST sources if not updated
