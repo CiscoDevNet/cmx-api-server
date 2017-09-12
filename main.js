@@ -89,10 +89,10 @@ if (process.env.WORKER_ID !== undefined) {
     var notifyApiRoute = require('./routes/api/notify')(currentDeviceCache, notifySourceCache);
     var metricsApiRoute = require('./routes/api/metrics')(passport, restMetrics, notifyMetrics);
 
-    app.use('/api/v3/location/clients', clientsApiRoute);
-    app.use('/api/v1/config', configApiRoute);
-    app.use('/api/v1/notify', notifyApiRoute);
-    app.use('/api/v1/metrics', metricsApiRoute);
+    app.use('/api/location/v3/clients', clientsApiRoute);
+    app.use('/api/config/v1', configApiRoute);
+    app.use('/api/notify/v1', notifyApiRoute);
+    app.use('/api/metrics/v1', metricsApiRoute);
 
     logger.info("Worker [%s]: API routes configured" , process.env.WORKER_ID);
 

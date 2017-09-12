@@ -37,7 +37,7 @@ clients no longer being tracked in CMX. Create the location update notification 
   * **Device Type** Select the device type. Preferred option is _Client_
   * **Hierarchy** Select the hierarchy. Preferred option is _All Locations_
   * **Mac Address** Enter a MAC Address to filter upon. Preferred option is to leave the field blank
-  * **Receiver** Use _https_ option with the server IP and default port is _9094_. The URI is _api/v1/notify/location_
+  * **Receiver** Use _https_ option with the server IP and default port is _9094_. The URI is _api/notify/v1/location_
   * **MAC Hashing** MAC hashing should be _OFF_
   * **Message Format** Select _JSON_
 
@@ -47,7 +47,7 @@ Create the absence event notification with the following settings
   * **Type** Select Absence_
   * **Device Type** Select the device type. Preferred option is _Client_
   * **Mac Address** Enter a MAC Address to filter upon. Preferred option is to leave the field blank
-  * **Receiver** Use _https_ option with the server IP and default port is _9094_. The URI is _api/v1/notify/absence
+  * **Receiver** Use _https_ option with the server IP and default port is _9094_. The URI is _api/notify/v1/absence
   * **MAC Hashing** MAC hashing should be _OFF_
   * **Message Format** Select _JSON_
 
@@ -103,7 +103,7 @@ If you wish to monitor the CPU and memory of the server then run the command **p
 The CMX API Server has REST APIs to query for information while receiving CMX notifications. The
 following are the REST APIs.
 
-  * **/api/v3/location/clients** Returns all the current clients attributes. Any client which has not been updated
+  * **/api/location/v3/clients** Returns all the current clients attributes. Any client which has not been updated
   by the configuration setting **CURRENT_DEVICE_TTL** will be removed from the cache.
     * The API supports the optional parameter **ipAddress**. This will filter clients based
     upon the clients IP address.
@@ -122,7 +122,7 @@ following are the REST APIs.
     * The API supports the optional parameter **macAddressSearch**. This will filter clients based
     upon the clients partial MAC address.
 
-  * **/api/v3/location/clients/count** Returns the count of all the current clients. Any client which has not been updated
+  * **/api/location/v3/clients/count** Returns the count of all the current clients. Any client which has not been updated
   by the configuration setting **CURRENT_DEVICE_TTL** will be removed from the cache.
     * The API supports the optional parameter **ipAddress**. This will filter clients based
     upon the clients IP address.
@@ -141,11 +141,11 @@ following are the REST APIs.
     * The API supports the optional parameter **macAddressSearch**. This will filter clients based
     upon the clients partial MAC address.
     
-  * **/api/v1/config/version** Returns the version information for the CMX API Server.
+  * **/api/config/v1/version** Returns the version information for the CMX API Server.
 
-  * **/api/v1/metrics/notifications** Returns the metrics for CMX notifications sent to the CMX API Server.
+  * **/api/metrics/v1/notifications** Returns the metrics for CMX notifications sent to the CMX API Server.
 
-  * **/api/v1/metrics/apis** Returns the metrics for CMX REST API requests to the CMX API Server.
+  * **/api/metrics/v1/apis** Returns the metrics for CMX REST API requests to the CMX API Server.
 
 
 # Building CMX API Server #
