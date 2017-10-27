@@ -1,6 +1,6 @@
 {
   "name": "cisco-cmx-api-server",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "description": "CMX API Server Example",
   "main": "main",
   "scripts": {

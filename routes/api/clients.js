@@ -31,6 +31,8 @@ module.exports = function(passport, currentDeviceCache, restSourceCache) {
         clientFilter.clientUsernameFilterSelected = false;
         clientFilter.clientManufacturerFilterSelected = false;
         clientFilter.clientMacAddressSearchFilterSelected = false;
+        clientFilter.clientAssociatedOnlySelected = false;
+        clientFilter.clientProbingOnlySelected = false;
 
         if (req.query['macAddress'] !== undefined) {
             clientFilter.clientMacFilterSelected = true;
@@ -71,6 +73,16 @@ module.exports = function(passport, currentDeviceCache, restSourceCache) {
             clientFilter.clientMacAddressSearchFilterSelected = true;
             ++clientFilter.clientFilterCount;
             clientFilter.clientMacAddressSearchFilterString =  req.query['macAddressSearch'];
+        }
+        if ( req.query['associatedOnly'] !== undefined) {
+            clientFilter.clientAssociatedOnlySelected = true;
+            ++clientFilter.clientFilterCount;
+            clientFilter.clientAssociatedOnlyFilterBoolean =  (req.query['associatedOnly'] === 'true');
+        }
+        if ( req.query['probingOnly'] !== undefined) {
+            clientFilter.clientProbingOnlySelected = true;
+            ++clientFilter.clientFilterCount;
+            clientFilter.clientProbingOnlyFilterBoolean =  (req.query['probingOnly'] === 'true');
         }
         return clientFilter;
     }
@@ -118,6 +130,16 @@ module.exports = function(passport, currentDeviceCache, restSourceCache) {
         }
         if (clientFilter.clientMacAddressSearchFilterSelected) {
             if (clientFilter.clientMacAddressSearchFilterString === undefined || client.deviceId.search(clientFilter.clientMacAddressSearchFilterString) < 0) {
+                return false;
+            }
+        }
+        if (clientFilter.clientAssociatedOnlySelected) {
+            if (client.associated === undefined || clientFilter.clientAssociatedOnlyFilterBoolean === undefined || clientFilter.clientAssociatedOnlyFilterBoolean !== client.associated) {
+                return false;
+            }
+        }
+        if (clientFilter.clientProbingOnlySelected) {
+            if (client.associated === undefined || clientFilter.clientProbingOnlyFilterBoolean === undefined || clientFilter.clientProbingOnlyFilterBoolean === client.associated) {
                 return false;
             }
         }

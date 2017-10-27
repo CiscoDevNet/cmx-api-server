@@ -121,6 +121,10 @@ following are the REST APIs.
     upon the clients manufacturer.
     * The API supports the optional parameter **macAddressSearch**. This will filter clients based
     upon the clients partial MAC address.
+    * The API supports the optional parameter **associatedOnly**. The parameter should be set to _true_.
+    Any other value is considered false. This will filter for associated clients when true and probing only clients if false.
+    * The API supports the optional parameter **probingOnly**. The parameter should be set to _true_.
+    Any other value is considered false. This will filter for probing only clients when true and associated only clients if false.
 
   * **/api/location/v3/clients/count** Returns the count of all the current clients. Any client which has not been updated
   by the configuration setting **CURRENT_DEVICE_TTL** will be removed from the cache.
@@ -140,6 +144,10 @@ following are the REST APIs.
     upon the clients manufacturer.
     * The API supports the optional parameter **macAddressSearch**. This will filter clients based
     upon the clients partial MAC address.
+    * The API supports the optional parameter **associatedOnly**. The parameter should be set to _true_.
+    Any other value is considered false. This will filter for associated clients when true and probing only clients if false.
+    * The API supports the optional parameter **probingOnly**. The parameter should be set to _true_.
+    Any other value is considered false. This will filter for probing only clients when true and associated only clients if false.
     
   * **/api/config/v1/version** Returns the version information for the CMX API Server.
 
