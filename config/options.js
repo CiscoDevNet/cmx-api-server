@@ -19,5 +19,7 @@ module.exports.ASYNC_LIMIT = 5000;                     // Maximum number of asyn
 module.exports.LOG_SUMMARY_INFO_STATS_INTERVAL = 1800; // Number of seconds between logging summary information stats
 
 module.exports.DO_API_AUTHENTICATION = true;           // Should API authentication be done
+module.exports.IS_DEFAULT_PASSWORD = true;             // Is the default password still being used
+module.exports.CMX_API_SALT = 'a8302c3f35edb347';      // API salt
 module.exports.CMX_API_USERID = 'api';                 // API userid
-module.exports.CMX_API_PASSWORD = 'api';               // API password
+module.exports.CMX_API_PASSWORD = '1f2721323fa143b88434f60773bc68c43fc7968285454ddea0ea3ca918a71dc101e9aa29fbe612d300e9bfdb92a69506ecb502bba0c4c4d37ee7cfe8171b12fb';               // API password

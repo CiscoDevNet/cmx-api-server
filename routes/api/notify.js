@@ -13,7 +13,7 @@ module.exports = function(currentDeviceCache, notifySourceCache) {
     var urlMetrics = new Metrics(notifySourceCache);
 
     //-----------------------------------------------------------------------
-    //Post Listener: /api/v1/notify/location
+    //Post Listener: /api/notify/v1/location
     //
     //Description: Listens for CMX location notifications
     //-----------------------------------------------------------------------
@@ -47,7 +47,7 @@ module.exports = function(currentDeviceCache, notifySourceCache) {
     });
 
     //-----------------------------------------------------------------------
-    //Post Listener: /api/v1/notify/absence
+    //Post Listener: /api/notify/v1/absence
     //
     //Description: Listens for CMX absence notifications
     //-----------------------------------------------------------------------

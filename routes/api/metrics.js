@@ -8,7 +8,7 @@ var pkg = require(__base + 'package.json');
 module.exports = function(passport, restMetrics, notifyMetrics) {
 
     //-----------------------------------------------------------------------
-    //Get Listener: /api/v1/metrics/notifications
+    //Get Listener: /api/metrics/v1/notifications
     //
     //Description: Will return the metrics for notifications
     //-----------------------------------------------------------------------
@@ -22,7 +22,7 @@ module.exports = function(passport, restMetrics, notifyMetrics) {
     });
 
     //-----------------------------------------------------------------------
-    //Get Listener: /api/v1/metrics/apis
+    //Get Listener: /api/metrics/v1/apis
     //
     //Description: Will return the metrics for APIs
     //-----------------------------------------------------------------------

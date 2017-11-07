@@ -147,7 +147,7 @@ module.exports = function(passport, currentDeviceCache, restSourceCache) {
     }
 
     //-----------------------------------------------------------------------
-    //Get Listener: /api/v3/location/clients/count
+    //Get Listener: /api/location/v3/clients/count
     //
     //Description: Will return the current client count
     //-----------------------------------------------------------------------
@@ -248,7 +248,7 @@ module.exports = function(passport, currentDeviceCache, restSourceCache) {
     });
 
     //-----------------------------------------------------------------------
-    //Get Listener: /api/v3/location/clients
+    //Get Listener: /api/location/v3/clients
     //
     //Description: Will return the current clients in an array of client JSON objects
     //-----------------------------------------------------------------------

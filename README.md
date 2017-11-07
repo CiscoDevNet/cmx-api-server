@@ -70,8 +70,13 @@ file. The settings in the file are the following.
   * **ASYNC_LIMIT** [5000] Maximum number of async operations at a time
   * **LOG_SUMMARY_INFO_STATS_INTERVAL** [1800] Number of seconds between logging detail information stats
   * **DO_API_AUTHENTICATION** [true] Should API authentication be done
+  * **CMX_API_SALT** [a8302c3f35edb347] Salt used to hash password
   * **CMX_API_USERID** [api] REST api basic authentication user ID
-  * **CMX_API_PASSWORD** [api] REST api basic authentication password
+  * **CMX_API_PASSWORD** [api] REST api basic authentication password hashed
+  
+To change **CMX_API_PASSWORD** use the REST API **/api/config/v1/hash** to hash the password and
+set the value based upon the returned hash number. **CMX_API_SALT** should be updated when a new
+password is set. Change the salt to a new 16 hexadecimal number.
   
 # Running CMX API Server #
 
@@ -150,6 +155,9 @@ following are the REST APIs.
     Any other value is considered false. This will filter for probing only clients when true and associated only clients if false.
     
   * **/api/config/v1/version** Returns the version information for the CMX API Server.
+  * **/api/config/v1/hash** Returns the hashed password based upon the salt provided.
+    * The API supports the parameter **salt**. This is the salt to use to hash the password.
+    * The API supports the parameter **password**. Password to hash based upon the salt.
 
   * **/api/metrics/v1/notifications** Returns the metrics for CMX notifications sent to the CMX API Server.
 
