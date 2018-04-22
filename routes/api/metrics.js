@@ -1,9 +1,6 @@
 var express = require('express');
-var util = require('util');
 var router = express.Router();
 var logger = require(__base + 'config/logger');
-var configOptions = require(__base + 'config/options');
-var pkg = require(__base + 'package.json');
 
 module.exports = function(passport, restMetrics, notifyMetrics) {
 

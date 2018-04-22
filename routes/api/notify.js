@@ -1,12 +1,8 @@
 var express = require('express');
 var router = express.Router();
 var logger = require(__base + 'config/logger');
-var configOptions = require(__base + 'config/options');
 var Metrics = require(__base + 'lib/metrics');
 var util = require('util');
-var Table = require('cli-table');
-var async = require('async');
-var cluster = require('cluster');
 
 module.exports = function(currentDeviceCache, notifySourceCache) {
 

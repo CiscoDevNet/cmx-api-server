@@ -2,26 +2,21 @@
 global.__base = __dirname + '/';
 
 //external required modules
+var config = require('config');
 var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-var querystring = require('querystring');
-var fs = require('fs');
-var http = require('http');
 var passport = require('passport');
-var util = require('util');
 var Table = require('cli-table');
 var logger = require('./config/logger');
-var configOptions = require('./config/options');
 var pkg = require('./package.json');
-var async = require('async');
 var cluster = require('cluster');
 var NodeCache = require(__base + 'lib/cluster-node-cache');
 var Metrics = require(__base + 'lib/metrics');
-var restSourceCache = new NodeCache( cluster, { stdTTL: configOptions.REST_TTL, checkperiod: configOptions.REST_CHECK_PERIOD }, 'restSourceNameSpace' );
-var notifySourceCache = new NodeCache( cluster, { stdTTL: configOptions.NOTIFY_TTL, checkperiod: configOptions.NOTIFY_CHECK_PERIOD }, 'notifySourceNameSpace' );
-var currentDeviceCache = new NodeCache(cluster, { stdTTL: configOptions.CURRENT_DEVICE_TTL, checkperiod: configOptions.CURRENT_DEVICE_CHECK_PERIOD }, 'currentDeviceNameSpace' );
+var restSourceCache = new NodeCache( cluster, { stdTTL: config.get('restApi.metricTtl'), checkperiod: config.get('restApi.metricCheckInterval') }, 'restSourceNameSpace' );
+var notifySourceCache = new NodeCache( cluster, { stdTTL: config.get('notifications.metricTtl'), checkperiod: config.get('notifications.metricCheckInterval') }, 'notifySourceNameSpace' );
+var currentDeviceCache = new NodeCache(cluster, { stdTTL: config.get('device.ttl'), checkperiod: config.get('device.checkInterval') }, 'currentDeviceNameSpace' );
 var restMetrics = new Metrics(restSourceCache);
 var notifyMetrics = new Metrics(notifySourceCache);
 
@@ -58,7 +53,7 @@ if (process.env.WORKER_ID !== undefined) {
     logger.info("Worker [%s]: Created express handlebars", process.env.WORKER_ID);
 
     // required for passport
-    if (configOptions.DO_API_AUTHENTICATION) {
+    if (config.get('authentication.doApiAuthentication')) {
         passport.cmx_strategy = 'api-login';
     } else {
         passport.cmx_strategy = 'api-anonymous';
@@ -98,7 +93,7 @@ if (process.env.WORKER_ID !== undefined) {
 
     if (process.env.WORKER_INFO_STATS === "true") {
         logger.info("Worker [%s]: Worker info stats being executed from this worker", process.env.WORKER_ID);
-        setInterval(refreshSummaryInfo, configOptions.LOG_SUMMARY_INFO_STATS_INTERVAL * 1000);
+        setInterval(refreshSummaryInfo, config.get('server.logStatsInterval') * 1000);
     }
 
     // catch 404 and forward to error handler
@@ -119,6 +114,6 @@ if (process.env.WORKER_ID !== undefined) {
     });
 
     logger.info("Worker [%s]: Completed initialization of CMX API Server version: %s", process.env.WORKER_ID, pkg.version);
-    logger.info("Worker [%s]: Listening on port: %s using HTTPS protocol: %s do API authentication: %s", process.env.WORKER_ID, process.env.WORKER_PORT, configOptions.DO_HTTPS, configOptions.DO_API_AUTHENTICATION);
+    logger.info("Worker [%s]: Listening on port: %s using HTTPS protocol: %s do API authentication: %s", process.env.WORKER_ID, process.env.WORKER_PORT, config.get('server.doHttps'), config.get('authentication.doApiAuthentication'));
 }
 module.exports = app;

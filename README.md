@@ -53,29 +53,36 @@ Create the absence event notification with the following settings
 
 ## CMX API Server Configuration ##
 
-The default configuration settings can be modified in the file location in **config/options.js**
+The default configuration settings can be modified in the file location in **config/default.json**
 file. The settings in the file are the following.
 
-  * **NOTIFY_WEB_PORT** [9094] Web server port to listen for notifications
-  * **REST_WEB_PORT** [9095] Web server port to listen for REST API requests
-  * **DO_HTTPS** [true] Should the web server start using HTTPS
-  * **NUMBER_NOTIFY_WORKERS** [5] Number of workers for the notification processing
-  * **NUMBER_REST_WORKERS** [2] Number of workers for the REST API handling
-  * **CURRENT_DEVICE_TTL** [172800] Number of seconds before removing device from current cache if not updated
-  * **CURRENT_DEVICE_CHECK_PERIOD** [600] Number of seconds before checking for current devices to be removed
-  * **NOTIFY_TTL** [1200] Number of seconds before removing notify sources if not updated
-  * **NOTIFY_CHECK_PERIOD** [120] Number of seconds before checking for notify sources to be removed
-  * **REST_TTL** [1200] Number of seconds before removing REST sources if not updated
-  * **REST_CHECK_PERIOD** [120] Number of seconds before checking for REST sources to be removed
-  * **ASYNC_LIMIT** [5000] Maximum number of async operations at a time
-  * **LOG_SUMMARY_INFO_STATS_INTERVAL** [1800] Number of seconds between logging detail information stats
-  * **DO_API_AUTHENTICATION** [true] Should API authentication be done
-  * **CMX_API_SALT** [a8302c3f35edb347] Salt used to hash password
-  * **CMX_API_USERID** [api] REST api basic authentication user ID
-  * **CMX_API_PASSWORD** [api] REST api basic authentication password hashed
+  * _**server**_
+    * **doHttps** [true] Should the web server start using HTTPS
+    * **asyncLimit** [5000] Maximum number of async operations at a time
+    * **logStatsInterval** [1800] Number of seconds between logging detail information stats
+  * _**notifications**_
+    * **port** [9094] Web server port to listen for notifications
+    * **workers** [5] Number of workers for the notification processing
+    * **metricTtl** [1200] Number of seconds before removing notify sources if not updated
+    * **metricCheckInterval** [120] Number of seconds before checking for notify sources to be removed
+  * _**restApi**_
+    * **port** [9095] Web server port to listen for REST API requests
+    * **workers** [2] Number of workers for the REST API handling
+    * **metricTtl** [1200] Number of seconds before removing REST sources if not updated
+    * **metricCheckInterval** [120] Number of seconds before checking for REST sources to be removed
+  * _**device**_
+    * **ttl** [172800] Number of seconds before removing device from current cache if not updated
+    * **checkInterval** [600] Number of seconds before checking for current devices to be removed
+  * _**authentication**_
+    * **doApiAuthentication** [true] Should API authentication be done
+    * **isDefaultPassword** [true] Is the default password still being used
+    * **apiAuthenticationSalt** [a8302c3f35edb347] Salt used to hash password
+  * _**users**_
+    * **userId** [api] REST api basic authentication user ID
+    * **password** [api] REST api basic authentication password hashed
   
-To change **CMX_API_PASSWORD** use the REST API **/api/config/v1/hash** to hash the password and
-set the value based upon the returned hash number. **CMX_API_SALT** should be updated when a new
+To change **userId** use the REST API **/api/config/v1/hash** to hash the password and
+set the value based upon the returned hash number. **password** should be updated when a new
 password is set. Change the salt to a new 16 hexadecimal number.
   
 # Running CMX API Server #

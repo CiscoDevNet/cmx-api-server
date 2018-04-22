@@ -2,7 +2,6 @@ var express = require('express');
 var util = require('util');
 var router = express.Router();
 var logger = require(__base + 'config/logger');
-var configOptions = require(__base + 'config/options');
 var Security = require(__base + 'lib/security');
 var pkg = require(__base + 'package.json');
 

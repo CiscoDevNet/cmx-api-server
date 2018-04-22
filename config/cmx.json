@@ -1,0 +1,32 @@
+{
+  "server": {
+    "doHttps": false,
+    "asyncLimit": 5000,
+    "logStatsInterval": 1800
+  },
+  "notifications": {
+    "port": 9094,
+    "workers": 5,
+    "metricTtl": 1200,
+    "metricCheckInterval": 120
+  },
+  "restApi": {
+    "port": 9095,
+    "workers": 2,
+    "metricTtl": 1200,
+    "metricCheckInterval": 120
+  },
+  "device": {
+    "ttl": 172800,
+    "checkInterval": 600
+
+  },
+  "authentication": {
+    "doApiAuthentication": true,
+    "isDefaultPassword": true,
+    "apiAuthenticationSalt": "a8302c3f35edb347"
+  },
+  "users": [
+    { "userId": "api", "password": "1f2721323fa143b88434f60773bc68c43fc7968285454ddea0ea3ca918a71dc101e9aa29fbe612d300e9bfdb92a69506ecb502bba0c4c4d37ee7cfe8171b12fb" }
+  ]
+}

@@ -1,12 +1,10 @@
+var config = require('config');
 var express = require('express');
 var router = express.Router();
 var logger = require(__base + 'config/logger');
-var configOptions = require(__base + 'config/options');
 var Metrics = require(__base + 'lib/metrics');
 var util = require('util');
 var async = require('async');
-var infoSummaryUpdateDate = Date.now();
-var LOG_SUMMARY_INFO_UPDATE_INTERVAL = configOptions.LOG_SUMMARY_INFO_STATS_INTERVAL * 1000;
 
 module.exports = function(passport, currentDeviceCache, restSourceCache) {
 
@@ -99,7 +97,7 @@ module.exports = function(passport, currentDeviceCache, restSourceCache) {
     //-----------------------------------------------------------------------
     function clientSearch(clientFilter, client) {
         if (clientFilter.clientIpAddressFilterSelected) {
-            if (client.ipAddress === undefined || client.ipAddress[0] === undefined || clientFilter.clientIpAddressFilterString === undefined || clientFilter.clientIpAddressFilterString !== client.ipAddress[0]) {
+            if (client.ipAddress === undefined || client.ipAddress[0] === undefined || clientFilter.clientIpAddressFilterString === undefined || (clientFilter.clientIpAddressFilterString !== client.ipAddress[0] && (client.ipAddress[1] === undefined || clientFilter.clientIpAddressFilterString !== client.ipAddress[1]) && (client.ipAddress[2] === undefined || clientFilter.clientIpAddressFilterString !== client.ipAddress[2]))) {
                 return false;
             }
         }
@@ -198,7 +196,7 @@ module.exports = function(passport, currentDeviceCache, restSourceCache) {
             currentDeviceCache.keys().then(function(currentDeviceCacheKeysResults) {
                 if (!currentDeviceCacheKeysResults.err) {
                     var clientCountObj = {};
-                    async.eachLimit(currentDeviceCacheKeysResults.keys, configOptions.ASYNC_LIMIT, function (deviceKey, callback) {
+                    async.eachLimit(currentDeviceCacheKeysResults.keys, config.get('server.asyncLimit'), function (deviceKey, callback) {
                         try {
                             logger.debug("Worker [%s]: Get key in the cache: %s", process.env.WORKER_ID, deviceKey);
                             currentDeviceCache.get(deviceKey).then(function(currentDeviceCacheResults) {
@@ -292,7 +290,7 @@ module.exports = function(passport, currentDeviceCache, restSourceCache) {
             var firstObject = true;
             currentDeviceCache.keys().then(function(currentDeviceCacheKeysResults) {
                 if (!currentDeviceCacheKeysResults.err) {
-                    async.eachLimit(currentDeviceCacheKeysResults.keys, configOptions.ASYNC_LIMIT, function (deviceKey, callback) {
+                    async.eachLimit(currentDeviceCacheKeysResults.keys, config.get('server.asyncLimit'), function (deviceKey, callback) {
                         try {
                             logger.debug("Worker [%s]: Get key in the cache: %s", process.env.WORKER_ID, deviceKey);
                             currentDeviceCache.get(deviceKey).then(function(currentDeviceCacheResults) {
