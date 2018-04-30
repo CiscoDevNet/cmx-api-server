@@ -176,7 +176,7 @@ module.exports = function(passport, currentDeviceCache, restSourceCache) {
                 jsonData.error.message = "MAC filter does not support multiple filters";
                 return res.status(400).json(jsonData);
             }
-            currentDeviceCache.get(clientFilter.clientMacFilterString).then(function(currentDeviceCacheResults) {
+            currentDeviceCache.get("MAC:" + clientFilter.clientMacFilterString).then(function (currentDeviceCacheResults) {
                 var clientCountObj = {};
                 if (currentDeviceCacheResults.value !== undefined) {
                     ++totalClientCount;
@@ -192,41 +192,68 @@ module.exports = function(passport, currentDeviceCache, restSourceCache) {
                 logger.info("Worker [%s]: Completed count request from: %s with object: %s", process.env.WORKER_ID, requestIp, util.inspect(clientCountObj, {depth: null}));
                 return res.json(clientCountObj);
             });
+        } else if (clientFilter.clientIpAddressFilterSelected) {
+                if (Object.keys(req.query).length > 1) {
+                    jsonData.success = false;
+                    jsonData.error = {};
+                    jsonData.error.message = "IP Address filter does not support multiple filters";
+                    return res.status(400).json(jsonData);
+                }
+                currentDeviceCache.get("IP:" + clientFilter.clientIpAddressFilterString).then(function(currentKeyCacheResults) {
+                    currentDeviceCache.get("MAC:" + currentKeyCacheResults.value).then(function(currentDeviceCacheResults) {
+                        var clientCountObj = {};
+                        if (currentDeviceCacheResults.value !== undefined) {
+                            ++totalClientCount;
+                            if (currentDeviceCacheResults.value.associated) {
+                                ++associatedCount;
+                            } else {
+                                ++probingCount;
+                            }
+                        }
+                        clientCountObj.totalCount = totalClientCount;
+                        clientCountObj.associatedCount = associatedCount;
+                        clientCountObj.probingCount = probingCount;
+                        logger.info("Worker [%s]: Completed count request from: %s with object: %s", process.env.WORKER_ID, requestIp, util.inspect(clientCountObj, {depth: null}));
+                        return res.json(clientCountObj);
+                    });
+                });
         } else {
             currentDeviceCache.keys().then(function(currentDeviceCacheKeysResults) {
                 if (!currentDeviceCacheKeysResults.err) {
                     var clientCountObj = {};
                     async.eachLimit(currentDeviceCacheKeysResults.keys, config.get('server.asyncLimit'), function (deviceKey, callback) {
                         try {
-                            logger.debug("Worker [%s]: Get key in the cache: %s", process.env.WORKER_ID, deviceKey);
-                            currentDeviceCache.get(deviceKey).then(function(currentDeviceCacheResults) {
-                                try {
-                                    if (!currentDeviceCacheResults.err) { 
-                                        var value = currentDeviceCacheResults.value;
-                                        if (value !== undefined && value.sourceNotification !== undefined && value.deviceId !== undefined) {
-                                            logger.debug("Worker [%s]: Processing client for count: %s", process.env.WORKER_ID, value.deviceId);
-                                            if (clientSearch(clientFilter, value)) {
-                                                logger.debug("Worker [%s]: Increment count for: %s", process.env.WORKER_ID, value.deviceId);
-                                                ++totalClientCount;
-                                                if (value.associated) {
-                                                    ++associatedCount;
-                                                } else {
-                                                    ++probingCount;
+                            if (deviceKey.indexOf("MAC:") === 0) {
+                                logger.debug("Worker [%s]: Get key in the cache: %s", process.env.WORKER_ID, deviceKey);
+                                currentDeviceCache.get(deviceKey).then(function(currentDeviceCacheResults) {
+                                    try {
+                                        if (!currentDeviceCacheResults.err) {
+                                            var value = currentDeviceCacheResults.value;
+                                            if (value !== undefined && value.sourceNotification !== undefined && value.deviceId !== undefined) {
+                                                logger.debug("Worker [%s]: Processing client for count: %s", process.env.WORKER_ID, value.deviceId);
+                                                if (clientSearch(clientFilter, value)) {
+                                                    logger.debug("Worker [%s]: Increment count for: %s", process.env.WORKER_ID, value.deviceId);
+                                                    ++totalClientCount;
+                                                    if (value.associated) {
+                                                        ++associatedCount;
+                                                    } else {
+                                                        ++probingCount;
+                                                    }
                                                 }
+                                                callback();
+                                            } else {
+                                                callback();
+
                                             }
-                                            callback();
                                         } else {
                                             callback();
-                                            
                                         }
-                                    } else {
+                                    } catch (err) {
+                                        logger.error("Worker [%s]: Errors while processing device %s from the cache for client count: %s", process.env.WORKER_ID, deviceKey, err.message);
                                         callback();
                                     }
-                                } catch (err) {
-                                    logger.error("Worker [%s]: Errors while processing device %s from the cache for client count: %s", process.env.WORKER_ID, deviceKey, err.message);
-                                    callback();
-                                }
-                            });
+                                });
+                            }
                         } catch (err) {
                             logger.error("Worker [%s]: Errors while getting device %s from the cache for client count: %s", process.env.WORKER_ID, deviceKey, err.message);
                             callback();
@@ -274,13 +301,30 @@ module.exports = function(passport, currentDeviceCache, restSourceCache) {
                 jsonData.error.message = "MAC filter does not support multiple filters";
                 return res.status(400).json(jsonData);
             }
-            currentDeviceCache.get(clientFilter.clientMacFilterString).then(function(currentDeviceCacheResults) {
+            currentDeviceCache.get("MAC:" + clientFilter.clientMacFilterString).then(function (currentDeviceCacheResults) {
                 var clientObjArray = [];
                 if (currentDeviceCacheResults.value !== undefined) {
                     clientObjArray.push(currentDeviceCacheResults.value);
                 }
                 logger.info("Worker [%s]: Completed client search request from: %s", process.env.WORKER_ID, requestIp);
                 return res.json(clientObjArray);
+            });
+        } else if (clientFilter.clientIpAddressFilterSelected) {
+            if (Object.keys(req.query).length > 1) {
+                jsonData.success = false;
+                jsonData.error = {};
+                jsonData.error.message = "IP Address filter does not support multiple filters";
+                return res.status(400).json(jsonData);
+            }
+            currentDeviceCache.get("IP:" + clientFilter.clientIpAddressFilterString).then(function(currentKeyCacheResults) {
+                currentDeviceCache.get("MAC:" + currentKeyCacheResults.value).then(function(currentDeviceCacheResults) {
+                    var clientObjArray = [];
+                    if (currentDeviceCacheResults.value !== undefined) {
+                        clientObjArray.push(currentDeviceCacheResults.value);
+                    }
+                    logger.info("Worker [%s]: Completed client search request from: %s", process.env.WORKER_ID, requestIp);
+                    return res.json(clientObjArray);
+                });
             });
         } else {
             res.writeHeader(200, {
@@ -292,34 +336,36 @@ module.exports = function(passport, currentDeviceCache, restSourceCache) {
                 if (!currentDeviceCacheKeysResults.err) {
                     async.eachLimit(currentDeviceCacheKeysResults.keys, config.get('server.asyncLimit'), function (deviceKey, callback) {
                         try {
-                            logger.debug("Worker [%s]: Get key in the cache: %s", process.env.WORKER_ID, deviceKey);
-                            currentDeviceCache.get(deviceKey).then(function(currentDeviceCacheResults) {
-                                try {
-                                    if (!currentDeviceCacheResults.err) { 
-                                        var value = currentDeviceCacheResults.value;
-                                        if (value !== undefined && value.sourceNotification !== undefined && value.deviceId !== undefined) {
-                                            logger.debug("Worker [%s]: Processing client for count: %s", process.env.WORKER_ID, value.deviceId);
-                                            if (clientSearch(clientFilter, value)) {
-                                                logger.debug("Worker [%s]: Add client search for: %s", process.env.WORKER_ID, value.deviceId);
-                                                if (!firstObject) {
-                                                    res.write(',');
-                                                } else {
-                                                    firstObject = false;
+                            if (deviceKey.indexOf("MAC:") === 0) {
+                                logger.debug("Worker [%s]: Get key in the cache: %s", process.env.WORKER_ID, deviceKey);
+                                currentDeviceCache.get(deviceKey).then(function (currentDeviceCacheResults) {
+                                    try {
+                                        if (!currentDeviceCacheResults.err) {
+                                            var value = currentDeviceCacheResults.value;
+                                            if (value !== undefined && value.sourceNotification !== undefined && value.deviceId !== undefined) {
+                                                logger.debug("Worker [%s]: Processing client for count: %s", process.env.WORKER_ID, value.deviceId);
+                                                if (clientSearch(clientFilter, value)) {
+                                                    logger.debug("Worker [%s]: Add client search for: %s", process.env.WORKER_ID, value.deviceId);
+                                                    if (!firstObject) {
+                                                        res.write(',');
+                                                    } else {
+                                                        firstObject = false;
+                                                    }
+                                                    res.write(JSON.stringify(value));
                                                 }
-                                                res.write(JSON.stringify(value));
+                                                callback();
+                                            } else {
+                                                callback();
                                             }
-                                            callback();
                                         } else {
                                             callback();
                                         }
-                                    } else {
+                                    } catch (err) {
+                                        logger.error("Worker [%s]: Errors while processing device %s from the cache for client search: %s", process.env.WORKER_ID, deviceKey, err.message);
                                         callback();
                                     }
-                                } catch (err) {
-                                    logger.error("Worker [%s]: Errors while processing device %s from the cache for client search: %s", process.env.WORKER_ID, deviceKey, err.message);
-                                    callback();
-                                }
-                            });
+                                });
+                            }
                         } catch (err) {
                             logger.error("Worker [%s]: Errors while getting device %s from the cache for client search: %s", process.env.WORKER_ID, deviceKey, err.message);
                             callback();

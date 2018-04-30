@@ -35,7 +35,18 @@ module.exports = function(currentDeviceCache, notifySourceCache) {
             notificationData.sourceNotification = requestIp;
             notificationData.sourceNotificationKey = requestIp + "," + process.env.WORKER_ID;
             notificationData.notificationTime = currentDate.toString();
-            currentDeviceCache.set(notificationData.deviceId, notificationData);
+            currentDeviceCache.set("MAC:" + notificationData.deviceId, notificationData);
+            if (notificationData.ipAddress !== undefined) {
+                if (notificationData.ipAddress[0] !== undefined) {
+                    currentDeviceCache.set("IP:" + notificationData.ipAddress[0], notificationData.deviceId);
+                }
+                if (notificationData.ipAddress[1] !== undefined) {
+                    currentDeviceCache.set("IP:" + notificationData.ipAddress[1], notificationData.deviceId);
+                }
+                if (notificationData.ipAddress[2] !== undefined) {
+                    currentDeviceCache.set("IP:" + notificationData.ipAddress[2], notificationData.deviceId);
+                }
+            }
             logger.debug("Worker [%s]: Completed proccessing the location notification for device MAC: %s", process.env.WORKER_ID, notificationData.deviceId);
         } catch (err) {
             logger.error("Worker [%s]: Error processing location notification: %s from source: %s for device: %s Body data: %s", process.env.WORKER_ID, err.message, requestIp, notificationData.deviceId, util.inspect(notificationData, {depth: null}));
@@ -61,7 +72,18 @@ module.exports = function(currentDeviceCache, notifySourceCache) {
         try {
             logger.debug("Worker [%s]: Received absence notification for device from: %s for MAC: %s", process.env.WORKER_ID, requestIp, notificationData.deviceId);
             urlMetrics.incrementUrlCounter(requestIp, "/api/v1/notify/absence");
-            currentDeviceCache.del(notificationData.deviceId);
+            currentDeviceCache.del("MAC:" + notificationData.deviceId);
+            if (notificationData.ipAddress !== undefined) {
+                if (notificationData.ipAddress[0] !== undefined) {
+                    currentDeviceCache.del("IP:" + notificationData.ipAddress[0]);
+                }
+                if (notificationData.ipAddress[1] !== undefined) {
+                    currentDeviceCache.del("IP:" + notificationData.ipAddress[1]);
+                }
+                if (notificationData.ipAddress[2] !== undefined) {
+                    currentDeviceCache.del("IP:" + notificationData.ipAddress[2]);
+                }
+            }
             logger.debug("Worker [%s]: Completed proccessing the absence notification for device MAC: %s", process.env.WORKER_ID, notificationData.deviceId);
         } catch (err) {
             logger.error("Worker [%s]: Error processing absence notification: %s from source: %s for device: %s Body data: %s", process.env.WORKER_ID, err.message, requestIp, notificationData.deviceId, util.inspect(notificationData, {depth: null}));
