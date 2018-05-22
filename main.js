@@ -30,7 +30,7 @@ var notifyMetrics = new Metrics(notifySourceCache);
 //Returns: None
 //-----------------------------------------------------------------------
 function refreshSummaryInfo() {
-    var totalInfoTable = new Table();
+    var totalInfoTable = new Table({style:  { head: [], border: [] }});
     currentDeviceCache.getStats().then(function(statsResults) {
         var currentDevCount = statsResults.keys;
         totalInfoTable.push(

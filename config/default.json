@@ -21,7 +21,7 @@
     // Web server port to listen for REST APIs
     "port": 9095,
     // Number of workers for the REST API handling
-    "workers": 2,
+    "workers": 7,
     // Number of seconds before removing REST sources if not updated
     "metricTtl": 1200,
     // Number of seconds before checking for REST sources to be removed

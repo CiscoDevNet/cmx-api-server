@@ -12,7 +12,7 @@
   },
   "restApi": {
     "port": 9095,
-    "workers": 2,
+    "workers": 7,
     "metricTtl": 1200,
     "metricCheckInterval": 120
   },

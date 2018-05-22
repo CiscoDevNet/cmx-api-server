@@ -109,7 +109,7 @@ if (cluster.isMaster) {
 // -----------------------------------------------------------------------
 function refreshSummaryInfo() {
 
-    var processInfoTable = new Table();
+    var processInfoTable = new Table({style:  { head: [], border: [] }});
     var memoryUsage = process.memoryUsage();
     processInfoTable.push(
             {'Total Memroy': (os.totalmem() / 1048576).toFixed(2) + " MB"},

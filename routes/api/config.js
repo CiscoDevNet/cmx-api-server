@@ -17,10 +17,10 @@ module.exports = function(passport) {
         if (requestIp !== undefined) {
             requestIp = req.ip.replace(/^.*:/, '');
         }
-        logger.info("Worker [%s]: Version request from: %s", process.env.WORKER_ID, requestIp);
+        logger.debug("Worker [%s]: Version request from: %s", process.env.WORKER_ID, requestIp);
         var versionObj = {};
         versionObj.version = pkg.version;
-        logger.info("Worker [%s]: Version response from: %s with object: %s", process.env.WORKER_ID, requestIp, util.inspect(versionObj, {depth: null}));
+        logger.debug("Worker [%s]: Version response from: %s with object: %s", process.env.WORKER_ID, requestIp, util.inspect(versionObj, {depth: null}));
         return res.json(versionObj);
     });
 
@@ -54,7 +54,7 @@ module.exports = function(passport) {
         hashObj.salt = req.query['salt'];
         hashObj.password = req.query['password'];
         hashObj.hash = security.getHashString(req.query['password'], req.query['salt']);
-        logger.info("Worker [%s]: Version response from: %s with object: %s", process.env.WORKER_ID, requestIp, util.inspect(hashObj, {depth: null}));
+        logger.info("Worker [%s]: Hash response from: %s with hashed value", process.env.WORKER_ID, requestIp);
         return res.json(hashObj);
     });
 

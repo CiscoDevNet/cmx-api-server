@@ -5,6 +5,7 @@ var logger = require(__base + 'config/logger');
 var Metrics = require(__base + 'lib/metrics');
 var util = require('util');
 var async = require('async');
+var crypto = require('crypto');
 
 module.exports = function(passport, currentDeviceCache, restSourceCache) {
 
@@ -150,13 +151,14 @@ module.exports = function(passport, currentDeviceCache, restSourceCache) {
     //Description: Will return the current client count
     //-----------------------------------------------------------------------
     router.get('/count', passport.authenticate(passport.cmx_strategy, { session : false }), function(req, res, next) {
+        var requestId = crypto.randomBytes(16).toString("hex");
         var requestIp = req.ip;
         if (requestIp !== undefined) {
             requestIp = req.ip.replace(/^.*:/, '');
         } else {
             requestIp = 'Unknown';
         }
-        logger.info("Worker [%s]: Client count request from: %s queries: %s", process.env.WORKER_ID, requestIp, util.inspect(req.query, {depth: null}));
+        logger.info("Worker [%s][%s]: Client count request from: %s queries: %s", process.env.WORKER_ID, requestId, requestIp, util.inspect(req.query, {depth: null}));
         urlMetrics.incrementUrlCounter(requestIp, "/api/v3/location/clients/count");
         var jsonData = {};
         var clientFilter = getClientFilter(req);
@@ -189,7 +191,7 @@ module.exports = function(passport, currentDeviceCache, restSourceCache) {
                 clientCountObj.totalCount = totalClientCount;
                 clientCountObj.associatedCount = associatedCount;
                 clientCountObj.probingCount = probingCount;
-                logger.info("Worker [%s]: Completed count request from: %s with object: %s", process.env.WORKER_ID, requestIp, util.inspect(clientCountObj, {depth: null}));
+                logger.info("Worker [%s][%s]: Completed count request for MAC address from: %s with object: %s", process.env.WORKER_ID, requestId, requestIp, util.inspect(clientCountObj, {depth: null}));
                 return res.json(clientCountObj);
             });
         } else if (clientFilter.clientIpAddressFilterSelected) {
@@ -213,62 +215,48 @@ module.exports = function(passport, currentDeviceCache, restSourceCache) {
                         clientCountObj.totalCount = totalClientCount;
                         clientCountObj.associatedCount = associatedCount;
                         clientCountObj.probingCount = probingCount;
-                        logger.info("Worker [%s]: Completed count request from: %s with object: %s", process.env.WORKER_ID, requestIp, util.inspect(clientCountObj, {depth: null}));
+                        logger.info("Worker [%s][%s]: Completed count request for IP address from: %s with object: %s", process.env.WORKER_ID, requestId, requestIp, util.inspect(clientCountObj, {depth: null}));
                         return res.json(clientCountObj);
                     });
                 });
         } else {
-            currentDeviceCache.keys().then(function(currentDeviceCacheKeysResults) {
-                if (!currentDeviceCacheKeysResults.err) {
-                    var clientCountObj = {};
-                    async.eachLimit(currentDeviceCacheKeysResults.keys, config.get('server.asyncLimit'), function (deviceKey, callback) {
-                        try {
-                            if (deviceKey.indexOf("MAC:") === 0) {
-                                logger.debug("Worker [%s]: Get key in the cache: %s", process.env.WORKER_ID, deviceKey);
-                                currentDeviceCache.get(deviceKey).then(function(currentDeviceCacheResults) {
-                                    try {
-                                        if (!currentDeviceCacheResults.err) {
-                                            var value = currentDeviceCacheResults.value;
-                                            if (value !== undefined && value.sourceNotification !== undefined && value.deviceId !== undefined) {
-                                                logger.debug("Worker [%s]: Processing client for count: %s", process.env.WORKER_ID, value.deviceId);
-                                                if (clientSearch(clientFilter, value)) {
-                                                    logger.debug("Worker [%s]: Increment count for: %s", process.env.WORKER_ID, value.deviceId);
-                                                    ++totalClientCount;
-                                                    if (value.associated) {
-                                                        ++associatedCount;
-                                                    } else {
-                                                        ++probingCount;
-                                                    }
-                                                }
-                                                callback();
-                                            } else {
-                                                callback();
-
-                                            }
+            try {
+                currentDeviceCache.getall().then(function (currentDeviceCacheResults) {
+                    try {
+                        if (!currentDeviceCacheResults.err) {
+                            var clientCountObj = {};
+                            var deviceValues = currentDeviceCacheResults.values;
+                            Object.keys(deviceValues).forEach(function(key) {
+                                var value = deviceValues[key];
+                                if (value !== undefined && value.sourceNotification !== undefined && value.deviceId !== undefined) {
+                                    if (clientSearch(clientFilter, value)) {
+                                        logger.debug("Worker [%s][%s]: Increment count for: %s", process.env.WORKER_ID, requestId, value.deviceId);
+                                        ++totalClientCount;
+                                        if (value.associated) {
+                                            ++associatedCount;
                                         } else {
-                                            callback();
+                                            ++probingCount;
                                         }
-                                    } catch (err) {
-                                        logger.error("Worker [%s]: Errors while processing device %s from the cache for client count: %s", process.env.WORKER_ID, deviceKey, err.message);
-                                        callback();
                                     }
-                                });
-                            }
-                        } catch (err) {
-                            logger.error("Worker [%s]: Errors while getting device %s from the cache for client count: %s", process.env.WORKER_ID, deviceKey, err.message);
-                            callback();
+                                }
+                            });
+                        } else {
+                            logger.debug("Worker [%s][%s]: Completed error response with error: %s", process.env.WORKER_ID, requestId, currentDeviceCacheResults.err);
                         }
-                    }, function(err) {
+                    } catch (err) {
+                        logger.error("Worker [%s][%s]: Errors while processing devices from the cache for client search: %s", process.env.WORKER_ID, requestId, err.message);
+                    } finally {
                         clientCountObj.totalCount = totalClientCount;
                         clientCountObj.associatedCount = associatedCount;
                         clientCountObj.probingCount = probingCount;
-                        logger.info("Worker [%s]: Completed count request from: %s with object: %s", process.env.WORKER_ID, requestIp, util.inspect(clientCountObj, {depth: null}));
+                        logger.info("Worker [%s][%s]: Completed count request from: %s with object: %s", process.env.WORKER_ID, requestIp, requestId, util.inspect(clientCountObj, {depth: null}));
                         return res.json(clientCountObj);
-                    });
-                } else {
-                    logger.error("Worker [%s]: Error while getting keys for client count: %s", process.env.WORKER_ID, err);
-                }
-            });
+                    }
+                });
+            } catch (err) {
+                setTimeout( res.end.bind( res ), 300 );
+                logger.error("Worker [%s][%s]: Errors while getting devices from the cache for client search: %s", process.env.WORKER_ID, requestId, err.message);
+            }
         }
     });
 
@@ -278,13 +266,14 @@ module.exports = function(passport, currentDeviceCache, restSourceCache) {
     //Description: Will return the current clients in an array of client JSON objects
     //-----------------------------------------------------------------------
     router.get('/', passport.authenticate(passport.cmx_strategy, { session : false }), function(req, res, next) {
+        var requestId = crypto.randomBytes(16).toString("hex");
         var requestIp = req.ip;
         if (requestIp !== undefined) {
             requestIp = req.ip.replace(/^.*:/, '');
         } else {
             requestIp = 'Unknown';
         }
-        logger.info("Worker [%s]: Client search request from: %s queries: %s", process.env.WORKER_ID, requestIp, util.inspect(req.query, {depth: null}));
+        logger.info("Worker [%s][%s]: Client search request from: %s queries: %s", process.env.WORKER_ID, requestId, requestIp, util.inspect(req.query, {depth: null}));
         urlMetrics.incrementUrlCounter(requestIp, "/api/v3/location/clients");
         var jsonData = {};
         var clientFilter = getClientFilter(req);
@@ -306,7 +295,7 @@ module.exports = function(passport, currentDeviceCache, restSourceCache) {
                 if (currentDeviceCacheResults.value !== undefined) {
                     clientObjArray.push(currentDeviceCacheResults.value);
                 }
-                logger.info("Worker [%s]: Completed client search request from: %s", process.env.WORKER_ID, requestIp);
+                logger.info("Worker [%s][%s]: Completed client search request for MAC address from: %s", process.env.WORKER_ID, requestId, requestIp);
                 return res.json(clientObjArray);
             });
         } else if (clientFilter.clientIpAddressFilterSelected) {
@@ -322,7 +311,7 @@ module.exports = function(passport, currentDeviceCache, restSourceCache) {
                     if (currentDeviceCacheResults.value !== undefined) {
                         clientObjArray.push(currentDeviceCacheResults.value);
                     }
-                    logger.info("Worker [%s]: Completed client search request from: %s", process.env.WORKER_ID, requestIp);
+                    logger.info("Worker [%s][%s]: Completed client search for IP address request from: %s", process.env.WORKER_ID, requestId, requestIp);
                     return res.json(clientObjArray);
                 });
             });
@@ -332,52 +321,40 @@ module.exports = function(passport, currentDeviceCache, restSourceCache) {
               });
             res.write('[');
             var firstObject = true;
-            currentDeviceCache.keys().then(function(currentDeviceCacheKeysResults) {
-                if (!currentDeviceCacheKeysResults.err) {
-                    async.eachLimit(currentDeviceCacheKeysResults.keys, config.get('server.asyncLimit'), function (deviceKey, callback) {
-                        try {
-                            if (deviceKey.indexOf("MAC:") === 0) {
-                                logger.debug("Worker [%s]: Get key in the cache: %s", process.env.WORKER_ID, deviceKey);
-                                currentDeviceCache.get(deviceKey).then(function (currentDeviceCacheResults) {
-                                    try {
-                                        if (!currentDeviceCacheResults.err) {
-                                            var value = currentDeviceCacheResults.value;
-                                            if (value !== undefined && value.sourceNotification !== undefined && value.deviceId !== undefined) {
-                                                logger.debug("Worker [%s]: Processing client for count: %s", process.env.WORKER_ID, value.deviceId);
-                                                if (clientSearch(clientFilter, value)) {
-                                                    logger.debug("Worker [%s]: Add client search for: %s", process.env.WORKER_ID, value.deviceId);
-                                                    if (!firstObject) {
-                                                        res.write(',');
-                                                    } else {
-                                                        firstObject = false;
-                                                    }
-                                                    res.write(JSON.stringify(value));
-                                                }
-                                                callback();
-                                            } else {
-                                                callback();
-                                            }
+            try {
+                currentDeviceCache.getall().then(function (currentDeviceCacheResults) {
+                    try {
+                        if (!currentDeviceCacheResults.err) {
+                            var deviceValues = currentDeviceCacheResults.values;
+                            Object.keys(deviceValues).forEach(function(key) {
+                                var value = deviceValues[key];
+                                if (value !== undefined && value.sourceNotification !== undefined && value.deviceId !== undefined) {
+                                    if (clientSearch(clientFilter, value)) {
+                                        if (!firstObject) {
+                                            res.write(',');
                                         } else {
-                                            callback();
+                                            firstObject = false;
                                         }
-                                    } catch (err) {
-                                        logger.error("Worker [%s]: Errors while processing device %s from the cache for client search: %s", process.env.WORKER_ID, deviceKey, err.message);
-                                        callback();
+                                        res.write(JSON.stringify(value));
                                     }
-                                });
-                            }
-                        } catch (err) {
-                            logger.error("Worker [%s]: Errors while getting device %s from the cache for client search: %s", process.env.WORKER_ID, deviceKey, err.message);
-                            callback();
+                                }
+                            });
+                        } else {
+                            logger.debug("Worker [%s][%s]: Completed error response with error: %s", process.env.WORKER_ID, requestId, currentDeviceCacheResults.err);
                         }
-                    }, function(err) {
-                        logger.info("Worker [%s]: Completed client search request from: %s", process.env.WORKER_ID, requestIp);
-                        return res.end(']');
-                    });
-                } else {
-                    logger.error("Worker [%s]: Error while getting keys for client search: %s", process.env.WORKER_ID, err);
-                }
-            });
+                    } catch (err) {
+                        logger.error("Worker [%s][%s]: Errors while processing devices from the cache for client search: %s", process.env.WORKER_ID, requestId, err.message);
+                    } finally {
+                        res.write(']');
+                        setTimeout( res.end.bind( res ), 300 );
+                        logger.info("Worker [%s][%s]: Completed client search request from: %s queries: %s", process.env.WORKER_ID, requestId, requestIp, util.inspect(req.query, {depth: null}));
+                    }
+                });
+            } catch (err) {
+                res.write(']');
+                setTimeout( res.end.bind( res ), 300 );
+                logger.error("Worker [%s][%s]: Errors while getting devices from the cache for client search: %s", process.env.WORKER_ID, requestId, err.message);
+            }
         }
     });
 
