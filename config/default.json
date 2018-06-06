@@ -37,8 +37,6 @@
   "authentication": {
     // Should API authentication be done
     "doApiAuthentication": true,
-    // Is the default password still being used
-    "isDefaultPassword": true,
     // API authentication salt
     "apiAuthenticationSalt": "a8302c3f35edb347"
   },

@@ -13,6 +13,7 @@ var os = require('os');
 var Table = require('cli-table');
 var main = require('../main');
 var logger = require(__base + 'config/logger');
+var metricsLogger = require(__base + 'config/metrics-logger');
 var debug = require('debug')('cmx-tools:server');
 var privateKey = fs.readFileSync(__base + 'config/certs/server-key.pem').toString();
 var certificate = fs.readFileSync(__base + 'config/certs/server-cert.pem').toString();
@@ -77,6 +78,7 @@ if (cluster.isMaster) {
         workers.push(newWorker);
         ++workerId;
     });
+    refreshSummaryInfo();
     setInterval(refreshSummaryInfo, config.get('server.logStatsInterval') * 1000);
 } else {
     // Workers can share any TCP connection
@@ -112,14 +114,14 @@ function refreshSummaryInfo() {
     var processInfoTable = new Table({style:  { head: [], border: [] }});
     var memoryUsage = process.memoryUsage();
     processInfoTable.push(
-            {'Total Memroy': (os.totalmem() / 1048576).toFixed(2) + " MB"},
-            {'Free Memroy': (os.freemem() / 1048576).toFixed(2) + " MB"},
-            {'Master Node.js RSS Memroy': (memoryUsage.rss / 1048576).toFixed(2) + " MB"},
+            {'Total Memory': (os.totalmem() / 1048576).toFixed(2) + " MB"},
+            {'Free Memory': (os.freemem() / 1048576).toFixed(2) + " MB"},
+            {'Master Node.js RSS Memory': (memoryUsage.rss / 1048576).toFixed(2) + " MB"},
             {'Master Node.js Heap Total Memory': (memoryUsage.heapTotal/ 1048576).toFixed(2) + " MB"},
             {'Master Node.js Heap Used Memory': (memoryUsage.heapUsed / 1048576).toFixed(2) + " MB"},
             {'Master Node.js External Memory': (memoryUsage.external / 1048576).toFixed(2) + " MB"}
     );
-    logger.info("Memory Stats\n" + processInfoTable.toString());
+    metricsLogger.info("Memory Stats\n" + processInfoTable.toString());
 }
 
 /**

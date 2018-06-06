@@ -35,6 +35,7 @@ module.exports = function(currentDeviceCache, notifySourceCache) {
             notificationData.sourceNotification = requestIp;
             notificationData.sourceNotificationKey = requestIp + "," + process.env.WORKER_ID;
             notificationData.notificationTime = currentDate.toString();
+            notificationData.macAddress = notificationData.deviceId;
             currentDeviceCache.set("MAC:" + notificationData.deviceId, notificationData);
             if (notificationData.ipAddress !== undefined) {
                 if (notificationData.ipAddress[0] !== undefined) {

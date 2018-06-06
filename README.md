@@ -75,7 +75,6 @@ file. The settings in the file are the following.
     * **checkInterval** [600] Number of seconds before checking for current devices to be removed
   * _**authentication**_
     * **doApiAuthentication** [true] Should API authentication be done
-    * **isDefaultPassword** [true] Is the default password still being used
     * **apiAuthenticationSalt** [a8302c3f35edb347] Salt used to hash password
   * _**users**_
     * **userId** [api] REST api basic authentication user ID
