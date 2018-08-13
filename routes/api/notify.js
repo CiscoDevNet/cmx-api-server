@@ -1,4 +1,5 @@
 var express = require('express');
+var config = require('config');
 var router = express.Router();
 var logger = require(__base + 'config/logger');
 var Metrics = require(__base + 'lib/metrics');
@@ -7,6 +8,8 @@ var util = require('util');
 module.exports = function(currentDeviceCache, notifySourceCache) {
 
     var urlMetrics = new Metrics(notifySourceCache);
+    var associatedTtl = config.get('device.associatedTtl');
+    var probingTtl = config.get('device.probingTtl');
 
     //-----------------------------------------------------------------------
     //Post Listener: /api/notify/v1/location
@@ -15,15 +18,17 @@ module.exports = function(currentDeviceCache, notifySourceCache) {
     //-----------------------------------------------------------------------
     router.post('/location', function(req, res, next) {
         var requestIp = req.ip;
+        var bodyData = req.body;
+        res.sendStatus(200).end();
         if (requestIp !== undefined) {
-            requestIp = req.ip.replace(/^.*:/, '');
+            requestIp = requestIp.replace(/^.*:/, '');
         } else {
             requestIp = 'Unknown';
         }
-        logger.debug("Worker [%s]: Post location notification from: %s body: %s", process.env.WORKER_ID, requestIp, util.inspect(req.body, {depth: null}));
-        var bodyData = req.body;
+        if (logger.levels[logger.level] >= logger.levels['debug']) {
+            logger.debug("Worker [%s]: Post location notification from: %s body: %s", process.env.WORKER_ID, requestIp, util.inspect(bodyData, {depth: null}));
+        }
         var notificationData = bodyData.notifications[0];
-        res.sendStatus(200);
         try {
             logger.debug("Worker [%s]: Received location notification for device from: %s for MAC: %s", process.env.WORKER_ID, requestIp, notificationData.deviceId);
             urlMetrics.incrementUrlCounter(requestIp, "/api/v1/notify/location");
@@ -36,16 +41,20 @@ module.exports = function(currentDeviceCache, notifySourceCache) {
             notificationData.sourceNotificationKey = requestIp + "," + process.env.WORKER_ID;
             notificationData.notificationTime = currentDate.toString();
             notificationData.macAddress = notificationData.deviceId;
-            currentDeviceCache.set("MAC:" + notificationData.deviceId, notificationData);
-            if (notificationData.ipAddress !== undefined) {
+            var deviceTtl = probingTtl;
+            if (notificationData.associated !== undefined && notificationData.associated) {
+                deviceTtl = associatedTtl;
+            }
+            currentDeviceCache.set("MAC:" + notificationData.deviceId, notificationData, deviceTtl);
+            if (notificationData.ipAddress !== undefined && util.isArray(notificationData.ipAddress) && notificationData.ipAddress.length > 0) {
                 if (notificationData.ipAddress[0] !== undefined) {
-                    currentDeviceCache.set("IP:" + notificationData.ipAddress[0], notificationData.deviceId);
+                    currentDeviceCache.set("IP:" + notificationData.ipAddress[0], notificationData.deviceId, deviceTtl);
                 }
                 if (notificationData.ipAddress[1] !== undefined) {
-                    currentDeviceCache.set("IP:" + notificationData.ipAddress[1], notificationData.deviceId);
+                    currentDeviceCache.set("IP:" + notificationData.ipAddress[1], notificationData.deviceId, deviceTtl);
                 }
                 if (notificationData.ipAddress[2] !== undefined) {
-                    currentDeviceCache.set("IP:" + notificationData.ipAddress[2], notificationData.deviceId);
+                    currentDeviceCache.set("IP:" + notificationData.ipAddress[2], notificationData.deviceId, deviceTtl);
                 }
             }
             logger.debug("Worker [%s]: Completed proccessing the location notification for device MAC: %s", process.env.WORKER_ID, notificationData.deviceId);
@@ -61,20 +70,23 @@ module.exports = function(currentDeviceCache, notifySourceCache) {
     //-----------------------------------------------------------------------
     router.post('/absence', function(req, res, next) {
         var requestIp = req.ip;
+        var bodyData = req.body;
+        res.sendStatus(200).end();
         if (requestIp !== undefined) {
-            requestIp = req.ip.replace(/^.*:/, '');
+            requestIp = requestIp.replace(/^.*:/, '');
         } else {
             requestIp = 'Unknown';
         }
-        logger.debug("Worker [%s]: Post absence notification from: %s body: %s", process.env.WORKER_ID, requestIp, util.inspect(req.body, {depth: null}));
-        var bodyData = req.body;
+        if (logger.levels[logger.level] >= logger.levels['debug']) {
+            logger.debug("Worker [%s]: Post absence notification from: %s body: %s", process.env.WORKER_ID, requestIp, util.inspect(bodyData, {depth: null}));
+        }
         var notificationData = bodyData.notifications[0];
         res.sendStatus(200);
         try {
             logger.debug("Worker [%s]: Received absence notification for device from: %s for MAC: %s", process.env.WORKER_ID, requestIp, notificationData.deviceId);
             urlMetrics.incrementUrlCounter(requestIp, "/api/v1/notify/absence");
             currentDeviceCache.del("MAC:" + notificationData.deviceId);
-            if (notificationData.ipAddress !== undefined) {
+            if (notificationData.ipAddress !== undefined && util.isArray(notificationData.ipAddress) && notificationData.ipAddress.length > 0) {
                 if (notificationData.ipAddress[0] !== undefined) {
                     currentDeviceCache.del("IP:" + notificationData.ipAddress[0]);
                 }

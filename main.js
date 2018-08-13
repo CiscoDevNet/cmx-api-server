@@ -10,6 +10,7 @@ var bodyParser = require('body-parser');
 var passport = require('passport');
 var Table = require('cli-table');
 var logger = require('./config/logger');
+var metricsLogger = require(__base + 'config/metrics-logger');
 var pkg = require('./package.json');
 var cluster = require('cluster');
 var NodeCache = require(__base + 'lib/cluster-node-cache');
@@ -34,9 +35,9 @@ function refreshSummaryInfo() {
     currentDeviceCache.getStats().then(function(statsResults) {
         var currentDevCount = statsResults.keys;
         totalInfoTable.push(
-                {'Current Device Count': currentDevCount}
+                {'Current Key Count': currentDevCount}
         );
-        logger.info("Total Information Stats\n" + totalInfoTable.toString());
+        metricsLogger.info("Total Information Stats\n" + totalInfoTable.toString());
     });
     notifyMetrics.logMetrics("Noitifications");
     restMetrics.logMetrics("REST APIs");

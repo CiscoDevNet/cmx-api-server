@@ -28,11 +28,14 @@
     "metricCheckInterval": 120
   },
   "device": {
-    // Number of seconds before removing device from current cache if not updated
-    "ttl": 172800,
+    // Number of seconds for an associated client before removing device from current cache if not updated
+    "associatedTtl": 604800,
+    // Number of seconds for a probling client before removing device from current cache if not updated
+    "probingTtl": 1200,
+    // Global number of seconds before removing device from current cache if not updated
+    "ttl": 0,
     // Number of seconds before checking for current devices to be removed
-    "checkInterval": 600
-
+    "checkInterval": 120
   },
   "authentication": {
     // Should API authentication be done

@@ -39,6 +39,7 @@ if (cluster.isMaster) {
 
     // Fork workers.
     var workerId = 1;
+    var workerRestarts = 0;
     var workerInfoStats = true;
     for (let i = 0; i < config.get('notifications.workers'); i++) {
         var worker = cluster.fork({WORKER_ID: workerId, WORKER_PORT: config.get('notifications.port'), WORKER_INFO_STATS: workerInfoStats});
@@ -61,7 +62,7 @@ if (cluster.isMaster) {
     }
 
     cluster.on('exit', (worker, code, signal) => {
-        logger.info(`Worker PID ${worker.process.pid} died. Worker ID ${worker.id}`);
+        logger.error(`Worker PID ${worker.process.pid} died. Worker ID ${worker.id}`);
         for(var i=0; i < workers.length; i++){
             var aworker = workers[i];
             if (worker.pid === aworker.pid) {
@@ -77,6 +78,7 @@ if (cluster.isMaster) {
         newWorker.workerInfoStats = oldWorkerInfoStats;
         workers.push(newWorker);
         ++workerId;
+        ++workerRestarts;
     });
     refreshSummaryInfo();
     setInterval(refreshSummaryInfo, config.get('server.logStatsInterval') * 1000);
@@ -119,7 +121,10 @@ function refreshSummaryInfo() {
             {'Master Node.js RSS Memory': (memoryUsage.rss / 1048576).toFixed(2) + " MB"},
             {'Master Node.js Heap Total Memory': (memoryUsage.heapTotal/ 1048576).toFixed(2) + " MB"},
             {'Master Node.js Heap Used Memory': (memoryUsage.heapUsed / 1048576).toFixed(2) + " MB"},
-            {'Master Node.js External Memory': (memoryUsage.external / 1048576).toFixed(2) + " MB"}
+            {'Master Node.js External Memory': (memoryUsage.external / 1048576).toFixed(2) + " MB"},
+            {'Notification Workers': config.get('notifications.workers')},
+            {'REST API Workers': config.get('restApi.workers')},
+            {'Worker Restarts': workerRestarts}
     );
     metricsLogger.info("Memory Stats\n" + processInfoTable.toString());
 }

@@ -17,9 +17,10 @@
     "metricCheckInterval": 120
   },
   "device": {
-    "ttl": 172800,
-    "checkInterval": 600
-
+    "associatedTtl": 604800,
+    "probingTtl": 1200,
+    "ttl": 604800,
+    "checkInterval": 120
   },
   "authentication": {
     "doApiAuthentication": true,

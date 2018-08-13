@@ -32,54 +32,95 @@ module.exports = function(passport, currentDeviceCache, restSourceCache) {
         clientFilter.clientMacAddressSearchFilterSelected = false;
         clientFilter.clientAssociatedOnlySelected = false;
         clientFilter.clientProbingOnlySelected = false;
+        clientFilter.paramsString = "";
 
         if (req.query['macAddress'] !== undefined) {
             clientFilter.clientMacFilterSelected = true;
+            if (clientFilter.clientFilterCount > 0) {
+                clientFilter.paramsString += ",";
+            }
+            clientFilter.paramsString += "macAddress";
             ++clientFilter.clientFilterCount;
             clientFilter.clientMacFilterString = req.query['macAddress'];
         }
         if (req.query['ipAddress'] !== undefined) {
             clientFilter.clientIpAddressFilterSelected = true;
+            if (clientFilter.clientFilterCount > 0) {
+                clientFilter.paramsString += ",";
+            }
+            clientFilter.paramsString += "ipAddress";
             ++clientFilter.clientFilterCount;
             clientFilter.clientIpAddressFilterString = req.query['ipAddress'];
         }
         if (req.query['mapHierarchy'] !== undefined) {
             clientFilter.clientMapHierarchyFilterSelected = true;
+            if (clientFilter.clientFilterCount > 0) {
+                clientFilter.paramsString += ",";
+            }
+            clientFilter.paramsString += "mapHierarchy";
             ++clientFilter.clientFilterCount;
             clientFilter.clientMapHierarchyFilterString = req.query['mapHierarchy'];
         }
         if ( req.query['floorRefId'] !== undefined) {
             clientFilter.clientFloorRefIdFilterSelected = true;
+            if (clientFilter.clientFilterCount > 0) {
+                clientFilter.paramsString += ",";
+            }
+            clientFilter.paramsString += "floorRefId";
             ++clientFilter.clientFilterCount;
             clientFilter.clientFloorRefIdFilterString =  req.query['floorRefId'];
         }
         if (req.query["ssid"] !== undefined) {
             clientFilter.clientSsidFilterSelected = true;
+            if (clientFilter.clientFilterCount > 0) {
+                clientFilter.paramsString += ",";
+            }
+            clientFilter.paramsString += "ssid";
             ++clientFilter.clientFilterCount;
             clientFilter.clientSsidFilterString = req.query["ssid"];
         }
         if (req.query["username"] !== undefined) {
             clientFilter.clientUsernameFilterSelected = true;
+            if (clientFilter.clientFilterCount > 0) {
+                clientFilter.paramsString += ",";
+            }
+            clientFilter.paramsString += "username";
             ++clientFilter.clientFilterCount;
             clientFilter.clientUsernameFilterString = req.query["username"];
         }
         if (req.query["manufacturer"] !== undefined) {
             clientFilter.clientManufacturerFilterSelected = true;
+            if (clientFilter.clientFilterCount > 0) {
+                clientFilter.paramsString += ",";
+            }
+            clientFilter.paramsString += "manufacturer";
             ++clientFilter.clientFilterCount;
             clientFilter.clientManufacturerFilterString = req.query["manufacturer"];
         }
         if ( req.query['macAddressSearch'] !== undefined) {
             clientFilter.clientMacAddressSearchFilterSelected = true;
+            if (clientFilter.clientFilterCount > 0) {
+                clientFilter.paramsString += ",";
+            }
+            clientFilter.paramsString += "macAddressSearch";
             ++clientFilter.clientFilterCount;
             clientFilter.clientMacAddressSearchFilterString =  req.query['macAddressSearch'];
         }
         if ( req.query['associatedOnly'] !== undefined) {
             clientFilter.clientAssociatedOnlySelected = true;
+            if (clientFilter.clientFilterCount > 0) {
+                clientFilter.paramsString += ",";
+            }
+            clientFilter.paramsString += "associatedOnly";
             ++clientFilter.clientFilterCount;
             clientFilter.clientAssociatedOnlyFilterBoolean =  (req.query['associatedOnly'] === 'true');
         }
         if ( req.query['probingOnly'] !== undefined) {
             clientFilter.clientProbingOnlySelected = true;
+            if (clientFilter.clientFilterCount > 0) {
+                clientFilter.paramsString += ",";
+            }
+            clientFilter.paramsString += "probingOnly";
             ++clientFilter.clientFilterCount;
             clientFilter.clientProbingOnlyFilterBoolean =  (req.query['probingOnly'] === 'true');
         }
@@ -159,9 +200,13 @@ module.exports = function(passport, currentDeviceCache, restSourceCache) {
             requestIp = 'Unknown';
         }
         logger.info("Worker [%s][%s]: Client count request from: %s queries: %s", process.env.WORKER_ID, requestId, requestIp, util.inspect(req.query, {depth: null}));
-        urlMetrics.incrementUrlCounter(requestIp, "/api/v3/location/clients/count");
         var jsonData = {};
         var clientFilter = getClientFilter(req);
+        if (clientFilter.clientFilterCount > 0) {
+            urlMetrics.incrementUrlCounter(requestIp, "/api/v3/location/clients/count?" + clientFilter.paramsString);
+        } else {
+            urlMetrics.incrementUrlCounter(requestIp, "/api/v3/location/clients/count");
+        }
         if (Object.keys(req.query).length !== clientFilter.clientFilterCount) {
             jsonData.success = false;
             jsonData.error = {};
@@ -274,9 +319,13 @@ module.exports = function(passport, currentDeviceCache, restSourceCache) {
             requestIp = 'Unknown';
         }
         logger.info("Worker [%s][%s]: Client search request from: %s queries: %s", process.env.WORKER_ID, requestId, requestIp, util.inspect(req.query, {depth: null}));
-        urlMetrics.incrementUrlCounter(requestIp, "/api/v3/location/clients");
         var jsonData = {};
         var clientFilter = getClientFilter(req);
+        if (clientFilter.clientFilterCount > 0) {
+            urlMetrics.incrementUrlCounter(requestIp, "/api/v3/location/clients?" + clientFilter.paramsString);
+        } else {
+            urlMetrics.incrementUrlCounter(requestIp, "/api/v3/location/clients");
+        }
         if (Object.keys(req.query).length !== clientFilter.clientFilterCount) {
             jsonData.success = false;
             jsonData.error = {};
